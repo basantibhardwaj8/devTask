@@ -1,68 +1,103 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Profile from './Profile';
+import toast from 'react-hot-toast';
 
 function Login() {
+    const [focus, setFocus] = useState({});
+    const [error, setError] = useState('');
     const navigate = useNavigate();
-    const [emailFocused, setEmailFocused] = useState(false);
-    const [passwordFocused, setPasswordFocused] = useState(false);
+
+    const handleFocus = (field) =>
+        setFocus((prev) => ({ ...prev, [field]: true }));
+    const handleBlur = (field, value) =>
+        setFocus((prev) => ({ ...prev, [field]: value.trim() !== "" }));
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const form = e.target;
+        
+        if (!form.email.value.trim()) {
+            toast.error('Email is required');
+            return;
+        }
+        if (!form.password.value.trim()) {
+            toast.error('Password is required');
+            return;
+        }
+        
+        if (form.checkValidity()) {
+            const userData = JSON.parse(localStorage.getItem('userData'));
+            
+            if (!userData) {
+                toast.error('No account found. Please register first.');
+                setError('No account found. Please register first.');
+                return;
+            }
+
+            if (userData.email === form.email.value && userData.password === form.password.value) {
+                localStorage.setItem('isLoggedIn', 'true');
+                toast.success('Login successful!');
+                navigate('/profile');
+            } else {
+                toast.error('Invalid email or password');
+                setError('Invalid email or password');
+            }
+        } else {
+            if (!form.email.validity.valid) {
+                toast.error('Please enter a valid email address');
+            }
+            form.reportValidity();
+        }
+    };
 
     return (
-        <div className="h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-gray-100">
-            <div className="max-w-md w-full bg-white shadow-md rounded-lg p-6 sm:p-8">
-                <div className="flex flex-col gap-3">
-                    <h2 className="font-bold text-2xl sm:text-3xl text-center">
-                        Sign in to your PopX Account
-                    </h2>
-                    <p className="text-gray-400 font-semibold text-sm sm:text-lg text-center">
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                    </p>
+        <div className="h-screen flex items-center justify-center bg-gray-100">
+            <div className="h-[90%] w-full max-w-[300px] bg-gray-200 pt-4 px-5 rounded-sm shadow-md">
+                <h2 className="w-[180px] font-bold text-2xl text-gray-900">
+                    Signin to your PopX account
+                </h2>
+                
+                <p className="w-[180px] text-gray-500 text-sm mt-2">
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                </p>
 
-                    <form action="" className="my-5">
-                        {/* Email Field */}
-                        <div className="relative my-4">
-                            <label
-                                htmlFor="email"
-                                className={`absolute left-3 bg-white px-1 text-sm text-purple-600 transition-all duration-300 ${emailFocused ? 'text-xs -translate-y-1' : 'translate-y-2'}`}
-                            >
-                                Email Address
-                            </label>
-                            <input
-                                id="email"
-                                onFocus={() => setEmailFocused(true)}
-                                onBlur={(e) => setEmailFocused(e.target.value !== "")}
-                                placeholder=""
-                                className="mt-1 w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                type="email"
-                            />
-                        </div>
+                {error && (
+                    <p className="text-red-500 text-sm mt-2">{error}</p>
+                )}
 
-                        {/* Password Field */}
-                        <div className="relative my-4">
-                            <label
-                                htmlFor="password"
-                                className={`absolute left-3 bg-white px-1 text-sm text-purple-600 transition-all duration-300 ${passwordFocused ? 'text-xs -translate-y-1' : 'translate-y-2'}`}
-                            >
-                                Password
-                            </label>
-                            <input
-                                id="password"
-                                onFocus={() => setPasswordFocused(true)}
-                                onBlur={(e) => setPasswordFocused(e.target.value !== "")}
-                                placeholder=""
-                                className="mt-1 w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                type="password"
-                            />
-                        </div>
+                <form onSubmit={handleSubmit} className="h-[80%] flex flex-col mt-5">
+                    <div>
+                        {[
+                            { id: "email", label: "Email Address", type: "email" },
+                            { id: "password", label: "Password", type: "password" },
+                        ].map(({ id, label, type }) => (
+                            <div key={id} className="relative mb-3">
+                                <label
+                                    htmlFor={id}
+                                    className={`absolute left-2 px-1 text-sm text-[#542dde] bg-gray-200 transition-all duration-300 ${
+                                        focus[id] ? "text-xs -translate-y-2" : "translate-y-3"
+                                    }`}
+                                >
+                                    {label}
+                                </label>
+                                <input
+                                    id={id}
+                                    onFocus={() => handleFocus(id)}
+                                    onBlur={(e) => handleBlur(id, e.target.value)}
+                                    className="w-full mt-1 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    type={type}
+                                />
+                            </div>
+                        ))}
+                    </div>
 
-                        <button
-                            onClick={() => navigate('/profile')}
-                            className="bg-[#7B3FF6] w-full hover:bg-[#5b15e8] text-white font-semibold py-3 rounded-lg cursor-pointer mt-4"
-                        >
-                            Login
-                        </button>
-                    </form>
-                </div>
+                    <button
+                        type="submit"
+                        className="bg-[#542dde] w-full hover:bg-[#411ebe] mt-2 text-white font-semibold py-2 rounded-lg"
+                    >
+                        Login
+                    </button>
+                </form>
             </div>
         </div>
     );
